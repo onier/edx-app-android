@@ -15,6 +15,7 @@
         <include layout="@layout/toolbar" />
 
         <FrameLayout
+            android:id="@+id/content_error_root"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
@@ -163,6 +164,8 @@
                 style="@style/flying_message"
                 android:text="@string/started_downloading"
                 android:visibility="gone" />
+
+            <include layout="@layout/content_error" />
 
             <include layout="@layout/loading_indicator" />
 

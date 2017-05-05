@@ -7,6 +7,7 @@
     tools:context="org.edx.mobile.view.CourseCombinedInfoFragment">
 
     <FrameLayout
+        android:id="@+id/content_error_root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -57,11 +58,7 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/no_announcement_tv"
-            style="@style/content_unavailable_error_text"
-            android:text="@string/no_announcements_to_display"
-            tools:visibility="visible" />
+        <include layout="@layout/content_error" />
 
         <include layout="@layout/loading_indicator" />
 

@@ -1,6 +1,5 @@
 package org.edx.mobile.view;
 
-import android.app.Activity;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -9,6 +8,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.joanzapata.iconify.fonts.FontAwesomeIcons;
 
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
@@ -20,8 +21,10 @@ import org.edx.mobile.event.EnrolledInCourseEvent;
 import org.edx.mobile.exception.AuthException;
 import org.edx.mobile.http.HttpStatus;
 import org.edx.mobile.http.HttpStatusException;
+import org.edx.mobile.http.notifications.OverlayErrorNotification;
+import org.edx.mobile.http.notifications.SnackbarErrorNotification;
 import org.edx.mobile.interfaces.NetworkObserver;
-import org.edx.mobile.interfaces.NetworkSubject;
+import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.loader.AsyncTaskResult;
 import org.edx.mobile.loader.CoursesAsyncLoader;
 import org.edx.mobile.logger.Logger;
@@ -39,7 +42,9 @@ import javax.inject.Inject;
 
 import de.greenrobot.event.EventBus;
 
-public class MyCoursesListFragment extends BaseFragment implements NetworkObserver, LoaderManager.LoaderCallbacks<AsyncTaskResult<List<EnrolledCoursesResponse>>> {
+public class MyCoursesListFragment extends BaseFragment
+        implements NetworkObserver, RefreshListener,
+        LoaderManager.LoaderCallbacks<AsyncTaskResult<List<EnrolledCoursesResponse>>> {
 
     private static final int MY_COURSE_LOADER_ID = 0x905000;
 
@@ -53,6 +58,8 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
 
     @Inject
     private LoginPrefs loginPrefs;
+
+    private OverlayErrorNotification errorNotification;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -79,12 +86,13 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_my_courses_list, container, false);
+        errorNotification = new OverlayErrorNotification(binding.contentErrorRoot);
         binding.swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 // Hide the progress bar as swipe layout has its own progress indicator
                 binding.loadingIndicator.getRoot().setVisibility(View.GONE);
-                binding.noCourseTv.setVisibility(View.GONE);
+                errorNotification.hideError();
                 loadData(false);
             }
         });
@@ -126,12 +134,28 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
             if (result.getEx() instanceof AuthException) {
                 loginPrefs.clear();
                 getActivity().finish();
-            } else if (result.getEx() instanceof HttpStatusException &&
-                    ((HttpStatusException) result.getEx()).getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                environment.getRouter().forceLogout(
-                        getContext(),
-                        environment.getAnalyticsRegistry(),
-                        environment.getNotificationDelegate());
+            } else if (result.getEx() instanceof HttpStatusException) {
+                final HttpStatusException httpStatusException = (HttpStatusException) result.getEx();
+                switch (httpStatusException.getStatusCode()) {
+                    case HttpStatus.UNAUTHORIZED:{
+                        environment.getRouter().forceLogout(getContext(),
+                                environment.getAnalyticsRegistry(),
+                                environment.getNotificationDelegate());
+                        break;
+                    }
+                    default: {
+                        errorNotification.showError(R.string.network_connected_error,
+                                FontAwesomeIcons.fa_exclamation_circle, R.string.lbl_reload,
+                                new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        if (NetworkUtil.isConnected(getContext())) {
+                                            onRefresh();
+                                        }
+                                    }
+                                });
+                    }
+                }
             } else {
                 logger.error(result.getEx());
             }
@@ -148,11 +172,12 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
         binding.swipeContainer.setRefreshing(false);
         binding.loadingIndicator.getRoot().setVisibility(View.GONE);
         if (adapter.isEmpty() && !environment.getConfig().getCourseDiscoveryConfig().isCourseDiscoveryEnabled()) {
+            errorNotification.showError(R.string.no_courses_to_display,
+                    FontAwesomeIcons.fa_exclamation_circle, 0, null);
             binding.myCourseList.setVisibility(View.GONE);
-            binding.noCourseTv.setVisibility(View.VISIBLE);
         } else {
             binding.myCourseList.setVisibility(View.VISIBLE);
-            binding.noCourseTv.setVisibility(View.GONE);
+            errorNotification.hideError();
         }
     }
 
@@ -180,22 +205,6 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if (activity instanceof NetworkSubject) {
-            ((NetworkSubject) activity).registerNetworkObserver(this);
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        if (getActivity() instanceof NetworkSubject) {
-            ((NetworkSubject) getActivity()).unregisterNetworkObserver(this);
-        }
-    }
-
-    @Override
     public void onOnline() {
         if (binding.swipeContainer != null) {
             binding.swipeContainer.setEnabled(true);
@@ -207,6 +216,9 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
         //Disable swipe functionality and hide the loading view
         binding.swipeContainer.setEnabled(false);
         binding.swipeContainer.setRefreshing(false);
+        if (!errorNotification.isShowing()) {
+            new SnackbarErrorNotification(binding.getRoot()).showOfflineError(this);
+        }
     }
 
     @SuppressWarnings("unused")
@@ -217,7 +229,7 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
     protected void loadData(boolean showProgress) {
         if (showProgress) {
             binding.loadingIndicator.getRoot().setVisibility(View.VISIBLE);
-            binding.noCourseTv.setVisibility(View.GONE);
+            errorNotification.hideError();
         }
         getLoaderManager().restartLoader(MY_COURSE_LOADER_ID, null, this);
     }
@@ -233,5 +245,10 @@ public class MyCoursesListFragment extends BaseFragment implements NetworkObserv
                 environment.getRouter().showFindCourses(getActivity());
             }
         });
+    }
+
+    @Override
+    public void onRefresh() {
+        loadData(true);
     }
 }

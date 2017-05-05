@@ -3,9 +3,16 @@ package org.edx.mobile.http.callback;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.view.View;
 
+import com.joanzapata.iconify.fonts.FontAwesomeIcons;
+
+import org.edx.mobile.R;
 import org.edx.mobile.http.HttpStatusException;
 import org.edx.mobile.http.notifications.ErrorNotification;
+import org.edx.mobile.http.notifications.SnackbarErrorNotification;
+import org.edx.mobile.interfaces.RefreshListener;
+import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.view.common.TaskProgressCallback;
 
 import java.io.IOException;
@@ -46,6 +53,18 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
     private final ErrorNotification errorNotification;
 
     /**
+     * The notification display to invoke when user is viewing cached content.
+     */
+    @Nullable
+    private final SnackbarErrorNotification cacheNotification;
+
+    /**
+     * The listener to invoke when user wants to refresh the content being viewed.
+     */
+    @Nullable
+    private final RefreshListener refreshListener;
+
+    /**
      * Create a new instance of this class.
      *
      * @param context A Context for resolving the error message strings. Note that for convenience,
@@ -59,7 +78,7 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
     public ErrorHandlingCallback(@NonNull final Context context) {
         this(context, context instanceof TaskProgressCallback ?
                         (TaskProgressCallback) context : null,
-                null);
+                null, null, null);
     }
 
     /**
@@ -73,7 +92,7 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
      */
     public ErrorHandlingCallback(@NonNull final Context context,
                                  @Nullable final TaskProgressCallback progressCallback) {
-        this(context, progressCallback, null);
+        this(context, progressCallback, null, null, null);
     }
 
     /**
@@ -84,7 +103,36 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
      */
     public ErrorHandlingCallback(@NonNull final Context context,
                                  @Nullable final ErrorNotification errorNotification) {
-        this(context, null, errorNotification);
+        this(context, null, errorNotification, null, null);
+    }
+
+    /**
+     * Create a new instance of this class.
+     *
+     * @param context A Context for resolving the error message strings.
+     * @param errorNotification The notification display to invoke upon encountering an error.
+     */
+    public ErrorHandlingCallback(@NonNull final Context context,
+                                 @Nullable final TaskProgressCallback progressCallback,
+                                 @Nullable final ErrorNotification errorNotification) {
+        this(context, progressCallback, errorNotification, null, null);
+    }
+
+    /**
+     * Create a new instance of this class.
+     *
+     * @param context A Context for resolving the error message strings.
+     * @param errorNotification The notification display to invoke upon encountering an error.
+     * @param cacheNotification The notification display to invoke when user is viewing cached content.
+     * @param refreshListener The listener to invoke when user wants to refresh the content being viewed.
+     */
+    public ErrorHandlingCallback(@NonNull final Context context,
+                                 @Nullable final ErrorNotification errorNotification,
+                                 @Nullable final SnackbarErrorNotification cacheNotification,
+                                 @Nullable final RefreshListener refreshListener) {
+        this(context, context instanceof TaskProgressCallback ?
+                        (TaskProgressCallback) context : null, errorNotification,
+                cacheNotification, refreshListener);
     }
 
     /**
@@ -96,13 +144,19 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
      *                         initiation, it assumes that it's being initiated immediately, and
      *                         thus invokes that start callback immediately as well.
      * @param errorNotification The notification display to invoke upon encountering an error.
+     * @param cacheNotification The notification display to invoke when user is viewing cached content.
+     * @param refreshListener The listener to invoke when user wants to refresh the content being viewed.
      */
     public ErrorHandlingCallback(@NonNull final Context context,
                                  @Nullable final TaskProgressCallback progressCallback,
-                                 @Nullable final ErrorNotification errorNotification) {
+                                 @Nullable final ErrorNotification errorNotification,
+                                 @Nullable final SnackbarErrorNotification cacheNotification,
+                                 @Nullable final RefreshListener refreshListener) {
         this.context = context;
         this.progressCallback = progressCallback;
         this.errorNotification = errorNotification;
+        this.cacheNotification = cacheNotification;
+        this.refreshListener = refreshListener;
         // For the convenience of subclasses
         RoboGuice.injectMembers(context, this);
         if (progressCallback != null) {
@@ -135,6 +189,23 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
                 progressCallback.finishProcess();
             }
             onResponse(response.body());
+
+            // Show SnackBar if user is seeing cached content
+            if (response.raw().networkResponse() == null) {
+                if (cacheNotification != null && refreshListener != null) {
+                    cacheNotification.showError(R.string.offline_text, FontAwesomeIcons.fa_wifi,
+                            R.string.lbl_reload,
+                            new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    if (NetworkUtil.isConnected(context)) {
+                                        refreshListener.onRefresh();
+                                        cacheNotification.hideError();
+                                    }
+                                }
+                            });
+                }
+            }
         }
     }
 
@@ -164,7 +235,20 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
             progressCallback.finishProcess();
         }
         if (errorNotification != null) {
-            errorNotification.showError(context, error);
+            if (refreshListener != null) {
+                errorNotification.showError(R.string.reset_no_network_message,
+                        FontAwesomeIcons.fa_wifi, R.string.lbl_reload,
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (NetworkUtil.isConnected(context)) {
+                                    refreshListener.onRefresh();
+                                }
+                            }
+                        });
+            } else {
+                errorNotification.showError(context, error);
+            }
         }
         onFailure(error);
     }

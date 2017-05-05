@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.Switch;
-import android.widget.TextView;
 
 import com.facebook.Settings;
 import com.facebook.widget.LikeView;
@@ -22,8 +21,10 @@ import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
 import org.edx.mobile.core.IEdxEnvironment;
 import org.edx.mobile.http.callback.ErrorHandlingOkCallback;
-import org.edx.mobile.http.notifications.FullScreenErrorNotification;
+import org.edx.mobile.http.notifications.OverlayErrorNotification;
+import org.edx.mobile.http.notifications.SnackbarErrorNotification;
 import org.edx.mobile.http.provider.OkHttpClientProvider;
+import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.model.api.AnnouncementsModel;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
@@ -38,9 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Request;
-import roboguice.inject.InjectView;
 
-public class CourseCombinedInfoFragment extends BaseFragment {
+public class CourseCombinedInfoFragment extends BaseFragment implements RefreshListener {
 
     static final String TAG = CourseCombinedInfoFragment.class.getCanonicalName();
 
@@ -60,10 +60,9 @@ public class CourseCombinedInfoFragment extends BaseFragment {
     @Inject
     private OkHttpClientProvider okHttpClientProvider;
 
-    @InjectView(R.id.no_announcement_tv)
-    private TextView errorTextView;
+    private OverlayErrorNotification errorNotification;
 
-    private FullScreenErrorNotification errorNotification;
+    private SnackbarErrorNotification snackbarErrorNotification;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -100,7 +99,8 @@ public class CourseCombinedInfoFragment extends BaseFragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        errorNotification = new FullScreenErrorNotification(announcementWebView, errorTextView);
+        errorNotification = new OverlayErrorNotification(announcementWebView);
+        snackbarErrorNotification = new SnackbarErrorNotification(announcementWebView);
     }
 
     @Override
@@ -201,7 +201,8 @@ public class CourseCombinedInfoFragment extends BaseFragment {
                 .build())
                 .enqueue(new ErrorHandlingOkCallback<List<AnnouncementsModel>>(getActivity(),
                         new TypeToken<List<AnnouncementsModel>>() {
-                        }, errorNotification) {
+                        }, errorNotification, snackbarErrorNotification,
+                        this) {
                     @Override
                     protected void onResponse(final List<AnnouncementsModel> announcementsList) {
                         savedAnnouncements = announcementsList;
@@ -217,7 +218,7 @@ public class CourseCombinedInfoFragment extends BaseFragment {
     }
 
     private void populateAnnouncements(@NonNull List<AnnouncementsModel> announcementsList) {
-        errorTextView.setVisibility(View.GONE);
+        errorNotification.hideError();
 
         StringBuilder buff = WebViewUtil.getIntialWebviewBuffer(getActivity(), logger);
 
@@ -235,5 +236,18 @@ public class CourseCombinedInfoFragment extends BaseFragment {
 
         announcementWebView.clearCache(true);
         announcementWebView.loadDataWithBaseURL(environment.getConfig().getApiHostURL(), buff.toString(), "text/html", StandardCharsets.UTF_8.name(), null);
+    }
+
+    @Override
+    public void onOffline() {
+        if (!errorNotification.isShowing()) {
+            snackbarErrorNotification.showOfflineError(this);
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        errorNotification.hideError();
+        loadAnnouncementData(courseData);
     }
 }

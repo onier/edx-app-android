@@ -39,10 +39,10 @@ public class DialogErrorNotification extends ErrorNotification {
      * @param actionListener The callback to be invoked when the action button is clicked.
      */
     @Override
-    protected void showError(@StringRes final int errorResId,
-                             @NonNull final Icon icon,
-                             @StringRes final int actionTextResId,
-                             @Nullable final View.OnClickListener actionListener) {
+    public void showError(@StringRes final int errorResId,
+                          @NonNull final Icon icon,
+                          @StringRes final int actionTextResId,
+                          @Nullable final View.OnClickListener actionListener) {
         AlertDialogFragment.newInstance(0, errorResId, null).show(fragmentManager, null);
     }
 }

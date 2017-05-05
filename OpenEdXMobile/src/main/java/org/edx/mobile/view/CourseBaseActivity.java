@@ -14,7 +14,11 @@ import com.google.inject.Inject;
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragmentActivity;
 import org.edx.mobile.course.CourseAPI;
+import org.edx.mobile.http.notifications.OverlayErrorNotification;
+import org.edx.mobile.http.notifications.SnackbarErrorNotification;
+import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
+import org.edx.mobile.model.course.BlockPath;
 import org.edx.mobile.model.course.CourseComponent;
 import org.edx.mobile.model.course.CourseStructureV1Model;
 import org.edx.mobile.services.CourseManager;
@@ -33,7 +37,8 @@ import roboguice.inject.InjectView;
  *  3. offline_mode_message
  */
 @ContentView(R.layout.activity_course_base)
-public abstract  class CourseBaseActivity  extends BaseFragmentActivity implements TaskProcessCallback{
+public abstract  class CourseBaseActivity  extends BaseFragmentActivity
+        implements TaskProcessCallback, RefreshListener{
 
     @InjectView(R.id.last_accessed_bar)
     View lastAccessBar;
@@ -54,6 +59,10 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity implemen
 
     protected abstract void onLoadData();
 
+    private OverlayErrorNotification errorNotification;
+
+    private SnackbarErrorNotification snackbarErrorNotification;
+
     @Override
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
@@ -65,6 +74,8 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity implemen
             bar.setDisplayHomeAsUpEnabled(true);
             bar.setIcon(android.R.color.transparent);
         }
+        errorNotification = new OverlayErrorNotification(progressWheel);
+        snackbarErrorNotification = new SnackbarErrorNotification(progressWheel);
 
         Bundle bundle = arg0;
         if ( bundle == null ) {
@@ -106,18 +117,12 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity implemen
             final String courseId = courseData.getCourse().getId();
             getHierarchyCall = courseApi.getCourseStructure(courseId);
             getHierarchyCall.enqueue(new CourseAPI.GetCourseStructureCallback(this, courseId,
-                    new ProgressViewController(progressWheel)) {
+                    new ProgressViewController(progressWheel), errorNotification, this) {
                 @Override
                 protected void onResponse(@NonNull final CourseComponent courseComponent) {
                     courseComponentId = courseComponent.getId();
                     invalidateOptionsMenu();
                     onLoadData();
-                }
-
-                @Override
-                public void onFailure(@NonNull final Call<CourseStructureV1Model> call,
-                                      @NonNull final Throwable error) {
-                    showInfoMessage(getString(R.string.no_connectivity));
                 }
             });
         }
@@ -136,6 +141,9 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity implemen
     @Override
     protected void onOffline() {
         hideLoadingProgress();
+        if (!errorNotification.isShowing()) {
+            snackbarErrorNotification.showOfflineError(CourseBaseActivity.this);
+        }
     }
 
     @Override
@@ -210,6 +218,28 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity implemen
 
     public void onMessage(@NonNull MessageType messageType, @NonNull String message){
         showErrorMessage("", message);
+    }
+
+    protected boolean isOnCourseOutline(){
+        if (courseComponentId == null) return true;
+        CourseComponent outlineComp = courseManager.getComponentById(
+                courseData.getCourse().getId(), courseComponentId);
+        BlockPath outlinePath = outlineComp.getPath();
+        int outlinePathSize = outlinePath.getPath().size();
+
+        return outlinePathSize <= 1;
+    }
+
+    @Override
+    public void onRefresh() {
+        if (isOnCourseOutline()) {
+            if (getIntent() != null) {
+                restore(getIntent().getBundleExtra(Router.EXTRA_BUNDLE));
+            }
+        } else {
+            onLoadData();
+        }
+        snackbarErrorNotification.hideError();
     }
 }
 

@@ -33,24 +33,6 @@ public abstract class BaseVideosDownloadStateActivityTest extends BaseFragmentAc
     }
 
     /**
-     * Testing options menu initialization
-     */
-    @Test
-    @Override
-    public void initializeOptionsMenuTest() {
-        super.initializeOptionsMenuTest();
-        BaseVideosDownloadStateActivity activity =
-                Robolectric.buildActivity(getActivityClass())
-                        .withIntent(getIntent()).setup().get();
-        Menu menu = Shadows.shadowOf(activity).getOptionsMenu();
-        assertNotNull(menu);
-        // Can't see any method to confirm action layout source as well
-        MenuItem progressItem = menu.findItem(R.id.download_progress);
-        assertNotNull(progressItem);
-        assertThat(progressItem).hasTitle(activity.getText(R.string.action_settings));
-    }
-
-    /**
      * Testing download progress menu visibility states and click behaviour
      * (starting DownloadActivity). Only when both AppConstants.offline_flag
      * is true and there is a downloading entry in the database, should the

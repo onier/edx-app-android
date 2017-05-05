@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.widget.TextView;
 
 import com.google.inject.Inject;
 import com.joanzapata.iconify.fonts.FontAwesomeIcons;
@@ -17,25 +16,24 @@ import com.joanzapata.iconify.fonts.FontAwesomeIcons;
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
 import org.edx.mobile.core.IEdxEnvironment;
-import org.edx.mobile.event.NetworkConnectivityChangeEvent;
 import org.edx.mobile.http.callback.ErrorHandlingOkCallback;
-import org.edx.mobile.http.notifications.FullScreenErrorNotification;
+import org.edx.mobile.http.notifications.OverlayErrorNotification;
+import org.edx.mobile.http.notifications.SnackbarErrorNotification;
 import org.edx.mobile.http.provider.OkHttpClientProvider;
+import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
 import org.edx.mobile.model.api.HandoutModel;
 import org.edx.mobile.module.analytics.Analytics;
 import org.edx.mobile.module.analytics.AnalyticsRegistry;
-import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.WebViewUtil;
 import org.edx.mobile.view.custom.URLInterceptorWebViewClient;
 
-import de.greenrobot.event.EventBus;
 import okhttp3.Request;
 import roboguice.inject.InjectExtra;
 import roboguice.inject.InjectView;
 
-public class CourseHandoutFragment extends BaseFragment {
+public class CourseHandoutFragment extends BaseFragment implements RefreshListener {
     protected final Logger logger = new Logger(getClass().getName());
 
     @InjectExtra(Router.EXTRA_COURSE_DATA)
@@ -53,12 +51,9 @@ public class CourseHandoutFragment extends BaseFragment {
     @InjectView(R.id.webview)
     private WebView webview;
 
-    @InjectView(R.id.no_coursehandout_tv)
-    private TextView errorTextView;
+    private OverlayErrorNotification errorNotification;
 
-    private FullScreenErrorNotification errorNotification;
-
-    private boolean isHandoutFetched;
+    private SnackbarErrorNotification snackbarErrorNotification;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,7 +64,6 @@ public class CourseHandoutFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        EventBus.getDefault().register(this);
         return inflater.inflate(R.layout.fragment_handout, container, false);
     }
 
@@ -77,7 +71,8 @@ public class CourseHandoutFragment extends BaseFragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        errorNotification = new FullScreenErrorNotification(webview, errorTextView);
+        errorNotification = new OverlayErrorNotification(webview);
+        snackbarErrorNotification = new SnackbarErrorNotification(webview);
         new URLInterceptorWebViewClient(getActivity(), webview).setAllLinksAsExternal(true);
     }
 
@@ -93,7 +88,7 @@ public class CourseHandoutFragment extends BaseFragment {
                 .get()
                 .build())
                 .enqueue(new ErrorHandlingOkCallback<HandoutModel>(getActivity(),
-                        HandoutModel.class, errorNotification) {
+                        HandoutModel.class, errorNotification, snackbarErrorNotification, this) {
                     @Override
                     protected void onResponse(@NonNull final HandoutModel result) {
                         if (getActivity() == null) {
@@ -106,7 +101,6 @@ public class CourseHandoutFragment extends BaseFragment {
                             errorNotification.showError(R.string.no_handouts_to_display,
                                     FontAwesomeIcons.fa_exclamation_circle, 0, null);
                         }
-                        isHandoutFetched = true;
                     }
 
                     @Override
@@ -116,8 +110,6 @@ public class CourseHandoutFragment extends BaseFragment {
                         if (getActivity() == null) {
                             return;
                         }
-
-                        isHandoutFetched = false;
                     }
                 });
     }
@@ -139,27 +131,21 @@ public class CourseHandoutFragment extends BaseFragment {
 
     }
 
-    @SuppressWarnings("unused")
-    public void onEventMainThread(NetworkConnectivityChangeEvent event) {
-        if (!isHandoutFetched) {
-            if (NetworkUtil.isConnected(getContext())) {
-                hideErrorMessage();
-                loadData();
-            } else {
-                errorNotification.showError(R.string.reset_no_network_message,
-                        FontAwesomeIcons.fa_wifi, 0, null);
-            }
-        }
-    }
-
     private void hideErrorMessage() {
         webview.setVisibility(View.VISIBLE);
-        errorTextView.setVisibility(View.GONE);
+        errorNotification.hideError();
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        EventBus.getDefault().unregister(this);
+    public void onOffline() {
+        if (!errorNotification.isShowing()) {
+            snackbarErrorNotification.showOfflineError(this);
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        errorNotification.hideError();
+        loadData();
     }
 }
