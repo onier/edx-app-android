@@ -62,9 +62,8 @@ public class AlertDialogFragment extends RoboDialogFragment {
     public static AlertDialogFragment newInstance(@StringRes int titleResId, @StringRes int messageResId, @Nullable final DialogInterface.OnClickListener onPositiveClick) {
         final AlertDialogFragment fragment = new AlertDialogFragment();
         final Bundle arguments = new Bundle();
-        Bundle args = new Bundle();
-        args.putInt(ARG_TITLE_RES, titleResId);
-        args.putInt(ARG_MESSAGE_RES, messageResId);
+        arguments.putInt(ARG_TITLE_RES, titleResId);
+        arguments.putInt(ARG_MESSAGE_RES, messageResId);
         arguments.putParcelable(ARG_POSITIVE_ATTR, new ButtonAttribute() {
             @NonNull
             @Override
@@ -78,7 +77,7 @@ public class AlertDialogFragment extends RoboDialogFragment {
                 return onPositiveClick;
             }
         });
-        fragment.setArguments(args);
+        fragment.setArguments(arguments);
         return fragment;
     }
 
