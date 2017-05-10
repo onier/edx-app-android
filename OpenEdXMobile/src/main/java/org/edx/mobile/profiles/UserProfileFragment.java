@@ -23,11 +23,14 @@ import com.google.inject.Injector;
 
 import org.edx.mobile.R;
 import org.edx.mobile.databinding.FragmentUserProfileBinding;
+import org.edx.mobile.http.notifications.SnackbarErrorNotification;
+import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.module.analytics.AnalyticsRegistry;
 import org.edx.mobile.module.prefs.UserPrefs;
 import org.edx.mobile.user.UserService;
 import org.edx.mobile.util.Config;
+import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.ResourceUtil;
 import org.edx.mobile.util.images.ErrorUtils;
 import org.edx.mobile.view.PresenterFragment;
@@ -40,7 +43,9 @@ import java.util.List;
 import de.greenrobot.event.EventBus;
 import roboguice.RoboGuice;
 
-public class UserProfileFragment extends PresenterFragment<UserProfilePresenter, UserProfilePresenter.ViewInterface> implements UserProfileBioTabParent, ScrollingPreferenceParent {
+public class UserProfileFragment
+        extends PresenterFragment<UserProfilePresenter, UserProfilePresenter.ViewInterface>
+        implements UserProfileBioTabParent, ScrollingPreferenceParent, RefreshListener {
 
     @NonNull
     public static UserProfileFragment newInstance(@NonNull String username) {
@@ -173,6 +178,7 @@ public class UserProfileFragment extends PresenterFragment<UserProfilePresenter,
                 viewHolder.contentLoadingIndicator.getRoot().setVisibility(View.GONE);
                 viewHolder.contentError.getRoot().setVisibility(View.GONE);
                 viewHolder.profileBodyContent.setVisibility(View.VISIBLE);
+                viewHolder.profileHeader.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -194,6 +200,18 @@ public class UserProfileFragment extends PresenterFragment<UserProfilePresenter,
                 viewHolder.profileBodyContent.setVisibility(View.GONE);
                 viewHolder.contentError.getRoot().setVisibility(View.VISIBLE);
                 viewHolder.contentError.contentErrorText.setText(ErrorUtils.getErrorMessage(error, getContext()));
+                viewHolder.contentError.contentErrorAction.setText(R.string.lbl_reload);
+                viewHolder.contentError.contentErrorAction.setOnClickListener(
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (NetworkUtil.isConnected(getContext())) {
+                                    onRefresh();
+                                }
+                            }
+                        });
+                viewHolder.contentError.contentErrorAction.setVisibility(View.VISIBLE);
+                viewHolder.profileHeader.setVisibility(View.GONE);
             }
 
             @Override
@@ -265,5 +283,19 @@ public class UserProfileFragment extends PresenterFragment<UserProfilePresenter,
             pages.add(new StaticFragmentPagerAdapter.Item(tab.getFragmentClass(), resources.getString(tab.getDisplayName())));
         }
         return pages;
+    }
+
+    @Override
+    public void onRefresh() {
+        view.showLoading();
+        presenter.onRefresh();
+    }
+
+    @Override
+    public void onOffline() {
+        super.onOffline();
+        if (viewHolder.contentError.getRoot().getVisibility() != View.VISIBLE) {
+            new SnackbarErrorNotification(viewHolder.getRoot()).showOfflineError(this);
+        }
     }
 }
