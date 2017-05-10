@@ -189,6 +189,7 @@ public class UserProfileFragment
                 viewHolder.contentError.getRoot().setVisibility(View.GONE);
                 viewHolder.profileBodyContent.setVisibility(View.GONE);
                 viewHolder.contentLoadingIndicator.getRoot().setVisibility(View.VISIBLE);
+                viewHolder.profileHeader.setVisibility(View.GONE);
             }
 
             @Override
