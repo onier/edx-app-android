@@ -284,8 +284,8 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
                     }
                     onResponse(responseBody);
 
-                    // Show SnackBar if user is seeing cached content
-                    if (response.networkResponse() == null) {
+                    // Show SnackBar if user is seeing cached content while being offline.
+                    if (response.networkResponse() == null && !NetworkUtil.isConnected(context)) {
                         if (cacheNotification != null && refreshListener != null) {
                             cacheNotification.showError(R.string.offline_text,
                                     FontAwesomeIcons.fa_wifi, R.string.lbl_reload,
