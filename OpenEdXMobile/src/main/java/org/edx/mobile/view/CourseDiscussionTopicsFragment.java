@@ -23,18 +23,21 @@ import org.edx.mobile.discussion.CourseTopics;
 import org.edx.mobile.discussion.DiscussionService;
 import org.edx.mobile.discussion.DiscussionTopic;
 import org.edx.mobile.discussion.DiscussionTopicDepth;
+import org.edx.mobile.event.NetworkConnectivityChangeEvent;
 import org.edx.mobile.http.callback.ErrorHandlingCallback;
 import org.edx.mobile.http.notifications.OverlayErrorNotification;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
 import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
+import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.SoftKeyboardUtil;
 import org.edx.mobile.view.adapters.DiscussionTopicsAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import de.greenrobot.event.EventBus;
 import retrofit2.Call;
 import roboguice.inject.InjectExtra;
 import roboguice.inject.InjectView;
@@ -155,6 +158,13 @@ public class CourseDiscussionTopicsFragment extends BaseFragment implements Refr
                 discussionTopicsAdapter.setItems(allTopicsWithDepth);
                 discussionTopicsAdapter.notifyDataSetChanged();
             }
+
+            @Override
+            protected void onFinish() {
+                if (!EventBus.getDefault().isRegistered(CourseDiscussionTopicsFragment.this)) {
+                    EventBus.getDefault().registerSticky(CourseDiscussionTopicsFragment.this);
+                }
+            }
         });
     }
 
@@ -164,10 +174,12 @@ public class CourseDiscussionTopicsFragment extends BaseFragment implements Refr
         SoftKeyboardUtil.clearViewFocus(discussionTopicsSearchView);
     }
 
-    @Override
-    public void onOffline() {
-        if (!errorNotification.isShowing()) {
-            snackbarErrorNotification.showOfflineError(this);
+    @SuppressWarnings("unused")
+    public void onEvent(NetworkConnectivityChangeEvent event) {
+        if (!NetworkUtil.isConnected(getContext())) {
+            if (!errorNotification.isShowing()) {
+                snackbarErrorNotification.showOfflineError(this);
+            }
         }
     }
 
@@ -175,5 +187,11 @@ public class CourseDiscussionTopicsFragment extends BaseFragment implements Refr
     public void onRefresh() {
         getTopicList();
         errorNotification.hideError();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        EventBus.getDefault().unregister(this);
     }
 }

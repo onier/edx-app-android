@@ -16,6 +16,7 @@ import com.joanzapata.iconify.fonts.FontAwesomeIcons;
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
 import org.edx.mobile.core.IEdxEnvironment;
+import org.edx.mobile.event.NetworkConnectivityChangeEvent;
 import org.edx.mobile.http.callback.ErrorHandlingOkCallback;
 import org.edx.mobile.http.notifications.OverlayErrorNotification;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
@@ -26,9 +27,11 @@ import org.edx.mobile.model.api.EnrolledCoursesResponse;
 import org.edx.mobile.model.api.HandoutModel;
 import org.edx.mobile.module.analytics.Analytics;
 import org.edx.mobile.module.analytics.AnalyticsRegistry;
+import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.WebViewUtil;
 import org.edx.mobile.view.custom.URLInterceptorWebViewClient;
 
+import de.greenrobot.event.EventBus;
 import okhttp3.Request;
 import roboguice.inject.InjectExtra;
 import roboguice.inject.InjectView;
@@ -74,11 +77,6 @@ public class CourseHandoutFragment extends BaseFragment implements RefreshListen
         errorNotification = new OverlayErrorNotification(webview);
         snackbarErrorNotification = new SnackbarErrorNotification(webview);
         new URLInterceptorWebViewClient(getActivity(), webview).setAllLinksAsExternal(true);
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
         loadData();
     }
 
@@ -111,6 +109,13 @@ public class CourseHandoutFragment extends BaseFragment implements RefreshListen
                             return;
                         }
                     }
+
+                    @Override
+                    protected void onFinish() {
+                        if (!EventBus.getDefault().isRegistered(CourseHandoutFragment.this)) {
+                            EventBus.getDefault().registerSticky(CourseHandoutFragment.this);
+                        }
+                    }
                 });
     }
 
@@ -136,10 +141,12 @@ public class CourseHandoutFragment extends BaseFragment implements RefreshListen
         errorNotification.hideError();
     }
 
-    @Override
-    public void onOffline() {
-        if (!errorNotification.isShowing()) {
-            snackbarErrorNotification.showOfflineError(this);
+    @SuppressWarnings("unused")
+    public void onEventMainThread(NetworkConnectivityChangeEvent event) {
+        if (!NetworkUtil.isConnected(getContext())) {
+            if (!errorNotification.isShowing()) {
+                snackbarErrorNotification.showOfflineError(this);
+            }
         }
     }
 
@@ -147,5 +154,11 @@ public class CourseHandoutFragment extends BaseFragment implements RefreshListen
     public void onRefresh() {
         errorNotification.hideError();
         loadData();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        EventBus.getDefault().unregister(this);
     }
 }

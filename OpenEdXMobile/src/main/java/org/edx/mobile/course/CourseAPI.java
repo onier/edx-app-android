@@ -188,8 +188,9 @@ public class CourseAPI {
                                           @NonNull final String courseId,
                                           @Nullable final TaskProgressCallback progressCallback,
                                           @Nullable final ErrorNotification errorNotification,
+                                          @Nullable final SnackbarErrorNotification snackbarErrorNotification,
                                           @Nullable final RefreshListener refreshListener) {
-            super(context, progressCallback, errorNotification, null, refreshListener);
+            super(context, progressCallback, errorNotification, snackbarErrorNotification, refreshListener);
             this.courseId = courseId;
         }
 

@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 
 import org.edx.mobile.R;
 import org.edx.mobile.databinding.FragmentUserProfileBinding;
+import org.edx.mobile.event.NetworkConnectivityChangeEvent;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
 import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.logger.Logger;
@@ -179,6 +180,7 @@ public class UserProfileFragment
                 viewHolder.contentError.getRoot().setVisibility(View.GONE);
                 viewHolder.profileBodyContent.setVisibility(View.VISIBLE);
                 viewHolder.profileHeader.setVisibility(View.VISIBLE);
+                onFinish();
             }
 
             @Override
@@ -213,6 +215,7 @@ public class UserProfileFragment
                         });
                 viewHolder.contentError.contentErrorAction.setVisibility(View.VISIBLE);
                 viewHolder.profileHeader.setVisibility(View.GONE);
+                onFinish();
             }
 
             @Override
@@ -251,6 +254,12 @@ public class UserProfileFragment
             @Override
             public void navigateToProfileEditor(@NonNull String username) {
                 router.showUserProfileEditor(getActivity(), username);
+            }
+
+            private void onFinish() {
+                if (!EventBus.getDefault().isRegistered(UserProfileFragment.this)) {
+                    EventBus.getDefault().registerSticky(UserProfileFragment.this);
+                }
             }
         };
     }
@@ -292,11 +301,12 @@ public class UserProfileFragment
         presenter.onRefresh();
     }
 
-    @Override
-    public void onOffline() {
-        super.onOffline();
-        if (viewHolder.contentError.getRoot().getVisibility() != View.VISIBLE) {
-            new SnackbarErrorNotification(viewHolder.getRoot()).showOfflineError(this);
+    @SuppressWarnings("unused")
+    public void onEvent(NetworkConnectivityChangeEvent event) {
+        if (!NetworkUtil.isConnected(getContext())) {
+            if (viewHolder.contentError.getRoot().getVisibility() != View.VISIBLE) {
+                new SnackbarErrorNotification(viewHolder.getRoot()).showOfflineError(this);
+            }
         }
     }
 }

@@ -63,6 +63,9 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity
 
     private SnackbarErrorNotification snackbarErrorNotification;
 
+    // Reason of usage: Helps in deciding if we want to show a full screen error or a SnackBar.
+    private boolean isInitialServerCallDone = false;
+
     @Override
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
@@ -117,12 +120,18 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity
             final String courseId = courseData.getCourse().getId();
             getHierarchyCall = courseApi.getCourseStructure(courseId);
             getHierarchyCall.enqueue(new CourseAPI.GetCourseStructureCallback(this, courseId,
-                    new ProgressViewController(progressWheel), errorNotification, this) {
+                    new ProgressViewController(progressWheel), errorNotification,
+                    snackbarErrorNotification, this) {
                 @Override
                 protected void onResponse(@NonNull final CourseComponent courseComponent) {
                     courseComponentId = courseComponent.getId();
                     invalidateOptionsMenu();
                     onLoadData();
+                }
+
+                @Override
+                protected void onFinish() {
+                    isInitialServerCallDone = true;
                 }
             });
         }
@@ -135,13 +144,14 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity
         // after basic initialization
         if (courseComponentId != null) {
             onLoadData();
+            isInitialServerCallDone = true;
         }
     }
 
     @Override
     protected void onOffline() {
         hideLoadingProgress();
-        if (!errorNotification.isShowing()) {
+        if (isInitialServerCallDone && !errorNotification.isShowing()) {
             snackbarErrorNotification.showOfflineError(CourseBaseActivity.this);
         }
     }

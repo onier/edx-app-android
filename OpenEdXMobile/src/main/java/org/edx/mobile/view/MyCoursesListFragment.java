@@ -1,5 +1,6 @@
 package org.edx.mobile.view;
 
+import android.app.Activity;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -24,6 +25,7 @@ import org.edx.mobile.http.HttpStatusException;
 import org.edx.mobile.http.notifications.OverlayErrorNotification;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
 import org.edx.mobile.interfaces.NetworkObserver;
+import org.edx.mobile.interfaces.NetworkSubject;
 import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.loader.AsyncTaskResult;
 import org.edx.mobile.loader.CoursesAsyncLoader;
@@ -60,6 +62,9 @@ public class MyCoursesListFragment extends BaseFragment
     private LoginPrefs loginPrefs;
 
     private OverlayErrorNotification errorNotification;
+
+    // Reason of usage: Helps in deciding if we want to show a full screen error or a SnackBar.
+    private boolean isInitialServerCallDone = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -108,11 +113,6 @@ public class MyCoursesListFragment extends BaseFragment
         binding.myCourseList.addFooterView(new View(getContext()), null, false);
         binding.myCourseList.setAdapter(adapter);
         binding.myCourseList.setOnItemClickListener(adapter);
-        if (!(NetworkUtil.isConnected(getActivity()))) {
-            onOffline();
-        } else {
-            onOnline();
-        }
         return binding.getRoot();
     }
 
@@ -179,6 +179,13 @@ public class MyCoursesListFragment extends BaseFragment
             binding.myCourseList.setVisibility(View.VISIBLE);
             errorNotification.hideError();
         }
+
+        isInitialServerCallDone = true;
+        if (!(NetworkUtil.isConnected(getActivity()))) {
+            onOffline();
+        } else {
+            onOnline();
+        }
     }
 
     @Override
@@ -205,6 +212,22 @@ public class MyCoursesListFragment extends BaseFragment
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if (activity instanceof NetworkSubject) {
+            ((NetworkSubject) activity).registerNetworkObserver(this);
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        if (getActivity() instanceof NetworkSubject) {
+            ((NetworkSubject) getActivity()).unregisterNetworkObserver(this);
+        }
+    }
+
+    @Override
     public void onOnline() {
         if (binding.swipeContainer != null) {
             binding.swipeContainer.setEnabled(true);
@@ -216,7 +239,7 @@ public class MyCoursesListFragment extends BaseFragment
         //Disable swipe functionality and hide the loading view
         binding.swipeContainer.setEnabled(false);
         binding.swipeContainer.setRefreshing(false);
-        if (!errorNotification.isShowing()) {
+        if (isInitialServerCallDone && !errorNotification.isShowing()) {
             new SnackbarErrorNotification(binding.getRoot()).showOfflineError(this);
         }
     }

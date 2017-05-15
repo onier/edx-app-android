@@ -20,6 +20,7 @@ import com.joanzapata.iconify.fonts.FontAwesomeIcons;
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
 import org.edx.mobile.core.IEdxEnvironment;
+import org.edx.mobile.event.NetworkConnectivityChangeEvent;
 import org.edx.mobile.http.callback.ErrorHandlingOkCallback;
 import org.edx.mobile.http.notifications.OverlayErrorNotification;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
@@ -30,6 +31,7 @@ import org.edx.mobile.model.api.AnnouncementsModel;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
 import org.edx.mobile.module.facebook.IUiLifecycleHelper;
 import org.edx.mobile.social.facebook.FacebookProvider;
+import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.StandardCharsets;
 import org.edx.mobile.util.WebViewUtil;
 import org.edx.mobile.view.custom.EdxWebView;
@@ -38,6 +40,7 @@ import org.edx.mobile.view.custom.URLInterceptorWebViewClient;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.greenrobot.event.EventBus;
 import okhttp3.Request;
 
 public class CourseCombinedInfoFragment extends BaseFragment implements RefreshListener {
@@ -213,6 +216,13 @@ public class CourseCombinedInfoFragment extends BaseFragment implements RefreshL
                                     FontAwesomeIcons.fa_exclamation_circle, 0, null);
                         }
                     }
+
+                    @Override
+                    protected void onFinish() {
+                        if (!EventBus.getDefault().isRegistered(CourseCombinedInfoFragment.this)) {
+                            EventBus.getDefault().registerSticky(CourseCombinedInfoFragment.this);
+                        }
+                    }
                 });
 
     }
@@ -238,10 +248,12 @@ public class CourseCombinedInfoFragment extends BaseFragment implements RefreshL
         announcementWebView.loadDataWithBaseURL(environment.getConfig().getApiHostURL(), buff.toString(), "text/html", StandardCharsets.UTF_8.name(), null);
     }
 
-    @Override
-    public void onOffline() {
-        if (!errorNotification.isShowing()) {
-            snackbarErrorNotification.showOfflineError(this);
+    @SuppressWarnings("unused")
+    public void onEventMainThread(NetworkConnectivityChangeEvent event) {
+        if (!NetworkUtil.isConnected(getContext())) {
+            if (!errorNotification.isShowing()) {
+                snackbarErrorNotification.showOfflineError(this);
+            }
         }
     }
 
@@ -249,5 +261,11 @@ public class CourseCombinedInfoFragment extends BaseFragment implements RefreshL
     public void onRefresh() {
         errorNotification.hideError();
         loadAnnouncementData(courseData);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        EventBus.getDefault().unregister(this);
     }
 }

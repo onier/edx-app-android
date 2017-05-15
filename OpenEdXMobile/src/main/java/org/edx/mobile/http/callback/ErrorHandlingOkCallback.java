@@ -300,6 +300,7 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
                                     });
                         }
                     }
+                    onFinish();
                 }
             });
         }
@@ -354,6 +355,7 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
                     }
                 }
                 onFailure(error);
+                onFinish();
             }
         });
     }
@@ -374,4 +376,10 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
      *              {HttpResponseStatusException} if the failure was due to receiving an error code.
      */
     protected void onFailure(@NonNull final Throwable error) {}
+
+    /**
+     * Callback method that gets invoked at last when {@link #onResponse(Object)} or
+     * {@link #onResponse(Object)} have been called.
+     */
+    protected void onFinish() {}
 }

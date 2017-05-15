@@ -206,6 +206,7 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
                             });
                 }
             }
+            onFinish();
         }
     }
 
@@ -251,6 +252,7 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
             }
         }
         onFailure(error);
+        onFinish();
     }
 
     /**
@@ -272,4 +274,10 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
      *              creating the request or processing the response.
      */
     protected void onFailure(@NonNull final Throwable error) {}
+
+    /**
+     * Callback method that gets invoked at last when {@link #onResponse(Object)} or
+     * {@link #onResponse(Object)} have been called.
+     */
+    protected void onFinish() {}
 }
