@@ -313,4 +313,10 @@ public class UserProfileFragment
             }
         }
     }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        EventBus.getDefault().unregister(this);
+    }
 }
