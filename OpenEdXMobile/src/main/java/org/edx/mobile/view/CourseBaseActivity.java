@@ -6,6 +6,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -46,6 +47,9 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity
     @InjectView(R.id.loading_indicator)
     ProgressBar progressWheel;
 
+    @InjectView(R.id.content_area)
+    ViewGroup contentLayout;
+
     @Inject
     CourseAPI courseApi;
 
@@ -77,8 +81,8 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity
             bar.setDisplayHomeAsUpEnabled(true);
             bar.setIcon(android.R.color.transparent);
         }
-        errorNotification = new OverlayErrorNotification(progressWheel);
-        snackbarErrorNotification = new SnackbarErrorNotification(progressWheel);
+        errorNotification = new OverlayErrorNotification(contentLayout);
+        snackbarErrorNotification = new SnackbarErrorNotification(contentLayout);
 
         Bundle bundle = arg0;
         if ( bundle == null ) {
@@ -242,6 +246,7 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity
 
     @Override
     public void onRefresh() {
+        errorNotification.hideError();
         if (isOnCourseOutline()) {
             if (getIntent() != null) {
                 restore(getIntent().getBundleExtra(Router.EXTRA_BUNDLE));
@@ -249,7 +254,6 @@ public abstract  class CourseBaseActivity  extends BaseFragmentActivity
         } else {
             onLoadData();
         }
-        snackbarErrorNotification.hideError();
     }
 }
 

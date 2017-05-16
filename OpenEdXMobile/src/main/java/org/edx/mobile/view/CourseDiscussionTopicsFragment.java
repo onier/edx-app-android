@@ -185,8 +185,8 @@ public class CourseDiscussionTopicsFragment extends BaseFragment implements Refr
 
     @Override
     public void onRefresh() {
-        getTopicList();
         errorNotification.hideError();
+        getTopicList();
     }
 
     @Override
