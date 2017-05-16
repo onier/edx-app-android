@@ -68,6 +68,8 @@ public class UserProfileFragment
 
     protected final Logger logger = new Logger(getClass().getName());
 
+    private SnackbarErrorNotification snackbarErrorNotification;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -129,6 +131,8 @@ public class UserProfileFragment
     @Override
     protected UserProfilePresenter.ViewInterface createView() {
         viewHolder = DataBindingUtil.getBinding(getView());
+
+        snackbarErrorNotification = new SnackbarErrorNotification(viewHolder.getRoot());
 
         viewHolder.profileSectionPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
@@ -305,7 +309,7 @@ public class UserProfileFragment
     public void onEvent(NetworkConnectivityChangeEvent event) {
         if (!NetworkUtil.isConnected(getContext())) {
             if (viewHolder.contentError.getRoot().getVisibility() != View.VISIBLE) {
-                new SnackbarErrorNotification(viewHolder.getRoot()).showOfflineError(this);
+                snackbarErrorNotification.showOfflineError(this);
             }
         }
     }

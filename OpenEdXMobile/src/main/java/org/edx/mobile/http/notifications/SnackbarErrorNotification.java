@@ -57,22 +57,27 @@ public class SnackbarErrorNotification extends ErrorNotification {
                           @NonNull final Icon icon,
                           @StringRes final int actionTextResId,
                           @Nullable final View.OnClickListener actionListener) {
-        snackbar = Snackbar.make(view, errorResId, LENGTH_INDEFINITE);
-        if (actionTextResId != 0) {
-            // SnackBar automatically dimisses when the action item is pressed.
-            // This workaround has been implemented to by pass that behaviour.
-            snackbar.setAction(actionTextResId, new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+        if (snackbar == null) {
+            snackbar = Snackbar.make(view, errorResId, LENGTH_INDEFINITE);
+            if (actionTextResId != 0) {
+                // SnackBar automatically dimisses when the action item is pressed.
+                // This workaround has been implemented to by pass that behaviour.
+                snackbar.setAction(actionTextResId, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
 
-                }
-            });
+                    }
+                });
+            }
+            // By applying the listener to the button like we have done below, the Snackbar
+            // doesn't automatically dismiss and we have to manually dismiss it.
+            final Button actionButton = (Button) snackbar.getView().findViewById(android.support.design.R.id.snackbar_action);
+            actionButton.setOnClickListener(actionListener);
         }
-        // By applying the listener to the button like we have done below, the Snackbar
-        // doesn't automatically dismiss and we have to manually dismiss it.
-        final Button actionButton = (Button) snackbar.getView().findViewById(android.support.design.R.id.snackbar_action);
-        actionButton.setOnClickListener(actionListener);
-        snackbar.show();
+
+        if (!snackbar.isShown()) {
+            snackbar.show();
+        }
     }
 
     /**

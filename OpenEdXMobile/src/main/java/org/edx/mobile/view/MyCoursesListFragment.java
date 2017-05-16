@@ -63,6 +63,8 @@ public class MyCoursesListFragment extends BaseFragment
 
     private OverlayErrorNotification errorNotification;
 
+    private SnackbarErrorNotification snackbarErrorNotification;
+
     // Reason of usage: Helps in deciding if we want to show a full screen error or a SnackBar.
     private boolean isInitialServerCallDone = false;
 
@@ -92,6 +94,7 @@ public class MyCoursesListFragment extends BaseFragment
                              Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_my_courses_list, container, false);
         errorNotification = new OverlayErrorNotification(binding.contentErrorRoot);
+        snackbarErrorNotification = new SnackbarErrorNotification(binding.getRoot());
         binding.swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -240,7 +243,7 @@ public class MyCoursesListFragment extends BaseFragment
         binding.swipeContainer.setEnabled(false);
         binding.swipeContainer.setRefreshing(false);
         if (isInitialServerCallDone && !errorNotification.isShowing()) {
-            new SnackbarErrorNotification(binding.getRoot()).showOfflineError(this);
+            snackbarErrorNotification.showOfflineError(this);
         }
     }
 
