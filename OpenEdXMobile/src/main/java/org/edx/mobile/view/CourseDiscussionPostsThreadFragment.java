@@ -39,6 +39,7 @@ import org.edx.mobile.http.callback.ErrorHandlingCallback;
 import org.edx.mobile.model.Page;
 import org.edx.mobile.view.adapters.DiscussionPostsSpinnerAdapter;
 import org.edx.mobile.view.adapters.InfiniteScrollUtils;
+import org.edx.mobile.view.common.TaskProgressCallback;
 import org.edx.mobile.view.common.TaskProgressCallback.ProgressViewController;
 
 import java.io.Serializable;
@@ -449,7 +450,7 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
         createNewPostLayout.setVisibility(View.GONE);
 
         discussionService.getCourseDiscussionInfo(courseData.getCourse().getId())
-                .enqueue(new ErrorHandlingCallback<CourseDiscussionInfo>(getContext(), null, null) {
+                .enqueue(new ErrorHandlingCallback<CourseDiscussionInfo>(getContext(), (TaskProgressCallback) null) {
                     @Override
                     public void onFailure(@NonNull Call<CourseDiscussionInfo> call, @NonNull Throwable t) {
                         markAsBlackedOut(false);

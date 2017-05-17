@@ -20,6 +20,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.joanzapata.iconify.Icon;
 
 import org.edx.mobile.R;
 import org.edx.mobile.databinding.FragmentUserProfileBinding;
@@ -205,7 +206,12 @@ public class UserProfileFragment
                 viewHolder.profileSectionTabs.setVisibility(View.GONE);
                 viewHolder.contentLoadingIndicator.getRoot().setVisibility(View.GONE);
                 viewHolder.profileBodyContent.setVisibility(View.GONE);
+
+                final Icon errorIcon = ErrorUtils.getErrorIcon(error);
                 viewHolder.contentError.getRoot().setVisibility(View.VISIBLE);
+                if (errorIcon != null) {
+                    viewHolder.contentError.contentErrorIcon.setIcon(errorIcon);
+                }
                 viewHolder.contentError.contentErrorText.setText(ErrorUtils.getErrorMessage(error, getContext()));
                 viewHolder.contentError.contentErrorAction.setText(R.string.lbl_reload);
                 viewHolder.contentError.contentErrorAction.setOnClickListener(

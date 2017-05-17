@@ -72,7 +72,7 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
      * The notification display to invoke when user is viewing cached content.
      */
     @Nullable
-    private final SnackbarErrorNotification cacheNotification;
+    private final SnackbarErrorNotification snackbarErrorNotification;
 
     /**
      * The listener to invoke when user wants to refresh the content being viewed.
@@ -176,17 +176,17 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
      *                that only sets one callback explicitly).
      * @param responseBodyClass The response body class.
      * @param errorNotification The notification display to invoke upon encountering an error.
-     * @param cacheNotification The notification display to invoke when user is viewing cached content.
+     * @param snackbarErrorNotification The notification display to invoke when user is viewing cached content.
      * @param refreshListener The listener to invoke when user wants to refresh the content being viewed.
      */
     public ErrorHandlingOkCallback(@NonNull final Context context,
                                    @NonNull final Class<T> responseBodyClass,
                                    @Nullable final ErrorNotification errorNotification,
-                                   @Nullable final SnackbarErrorNotification cacheNotification,
+                                   @Nullable final SnackbarErrorNotification snackbarErrorNotification,
                                    @Nullable final RefreshListener refreshListener) {
         this(context, responseBodyClass,
                 context instanceof TaskProgressCallback ? (TaskProgressCallback) context : null,
-                errorNotification, cacheNotification, refreshListener);
+                errorNotification, snackbarErrorNotification, refreshListener);
     }
 
     /**
@@ -201,17 +201,17 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
      *                that only sets one callback explicitly).
      * @param responseBodyTypeToken The response body type token.
      * @param errorNotification The notification display to invoke upon encountering an error.
-     * @param cacheNotification The notification display to invoke when user is viewing cached content.
+     * @param snackbarErrorNotification The notification display to invoke when user is viewing cached content.
      * @param refreshListener The listener to invoke when user wants to refresh the content being viewed.
      */
     public ErrorHandlingOkCallback(@NonNull final Context context,
                                    @NonNull final TypeToken<T> responseBodyTypeToken,
                                    @Nullable final ErrorNotification errorNotification,
-                                   @Nullable final SnackbarErrorNotification cacheNotification,
+                                   @Nullable final SnackbarErrorNotification snackbarErrorNotification,
                                    @Nullable final RefreshListener refreshListener) {
         this(context, responseBodyTypeToken.getType(),
                 context instanceof TaskProgressCallback ? (TaskProgressCallback) context : null,
-                errorNotification, cacheNotification, refreshListener);
+                errorNotification, snackbarErrorNotification, refreshListener);
     }
 
     /**
@@ -224,20 +224,20 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
      *                         initiation, it assumes that it's being initiated immediately, and
      *                         thus invokes that start callback immediately as well.
      * @param errorNotification The notification display to invoke upon encountering an error.
-     * @param cacheNotification The notification display to invoke when user is viewing cached content.
+     * @param snackbarErrorNotification The notification display to invoke when user is viewing cached content.
      * @param refreshListener The listener to invoke when user wants to refresh the content being viewed.
      */
     public ErrorHandlingOkCallback(@NonNull final Context context,
                                    @NonNull final Type responseBodyType,
                                    @Nullable final TaskProgressCallback progressCallback,
                                    @Nullable final ErrorNotification errorNotification,
-                                   @Nullable final SnackbarErrorNotification cacheNotification,
+                                   @Nullable final SnackbarErrorNotification snackbarErrorNotification,
                                    @Nullable final RefreshListener refreshListener) {
         this.context = context;
         this.responseBodyType = responseBodyType;
         this.progressCallback = progressCallback;
         this.errorNotification = errorNotification;
-        this.cacheNotification = cacheNotification;
+        this.snackbarErrorNotification = snackbarErrorNotification;
         this.refreshListener = refreshListener;
         // For the convenience of subclasses
         RoboGuice.injectMembers(context, this);
@@ -286,15 +286,15 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
 
                     // Show SnackBar if user is seeing cached content while being offline.
                     if (response.networkResponse() == null && !NetworkUtil.isConnected(context)) {
-                        if (cacheNotification != null && refreshListener != null) {
-                            cacheNotification.showError(R.string.offline_text,
+                        if (snackbarErrorNotification != null && refreshListener != null) {
+                            snackbarErrorNotification.showError(R.string.offline_text,
                                     FontAwesomeIcons.fa_wifi, R.string.lbl_reload,
                                     new View.OnClickListener() {
                                         @Override
                                         public void onClick(View v) {
                                             if (NetworkUtil.isConnected(context)) {
                                                 refreshListener.onRefresh();
-                                                cacheNotification.hideError();
+                                                snackbarErrorNotification.hideError();
                                             }
                                         }
                                     });
@@ -340,8 +340,7 @@ public abstract class ErrorHandlingOkCallback<T> implements Callback {
                 }
                 if (errorNotification != null) {
                     if (refreshListener != null) {
-                        errorNotification.showError(R.string.reset_no_network_message,
-                                FontAwesomeIcons.fa_wifi, R.string.lbl_reload,
+                        errorNotification.showError(context, error, R.string.lbl_reload,
                                 new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {

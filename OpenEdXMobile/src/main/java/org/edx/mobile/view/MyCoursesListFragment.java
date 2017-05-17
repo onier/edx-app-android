@@ -133,12 +133,13 @@ public class MyCoursesListFragment extends BaseFragment
     @Override
     public void onLoadFinished(Loader<AsyncTaskResult<List<EnrolledCoursesResponse>>> asyncTaskResultLoader, AsyncTaskResult<List<EnrolledCoursesResponse>> result) {
         adapter.clear();
-        if (result.getEx() != null) {
-            if (result.getEx() instanceof AuthException) {
+        final Exception exception = result.getEx();
+        if (exception != null) {
+            if (exception instanceof AuthException) {
                 loginPrefs.clear();
                 getActivity().finish();
-            } else if (result.getEx() instanceof HttpStatusException) {
-                final HttpStatusException httpStatusException = (HttpStatusException) result.getEx();
+            } else if (exception instanceof HttpStatusException) {
+                final HttpStatusException httpStatusException = (HttpStatusException) exception;
                 switch (httpStatusException.getStatusCode()) {
                     case HttpStatus.UNAUTHORIZED:{
                         environment.getRouter().forceLogout(getContext(),
@@ -147,8 +148,7 @@ public class MyCoursesListFragment extends BaseFragment
                         break;
                     }
                     default: {
-                        errorNotification.showError(R.string.network_connected_error,
-                                FontAwesomeIcons.fa_exclamation_circle, R.string.lbl_reload,
+                        errorNotification.showError(getActivity(), exception, R.string.lbl_reload,
                                 new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
@@ -160,7 +160,7 @@ public class MyCoursesListFragment extends BaseFragment
                     }
                 }
             } else {
-                logger.error(result.getEx());
+                logger.error(exception);
             }
         } else if (result.getResult() != null) {
             ArrayList<EnrolledCoursesResponse> newItems = new ArrayList<EnrolledCoursesResponse>(result.getResult());

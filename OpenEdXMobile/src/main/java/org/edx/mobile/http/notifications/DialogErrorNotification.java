@@ -1,9 +1,11 @@
 package org.edx.mobile.http.notifications;
 
+import android.content.DialogInterface;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
 
 import com.joanzapata.iconify.Icon;
@@ -40,9 +42,17 @@ public class DialogErrorNotification extends ErrorNotification {
      */
     @Override
     public void showError(@StringRes final int errorResId,
-                          @NonNull final Icon icon,
+                          @Nullable final Icon icon,
                           @StringRes final int actionTextResId,
                           @Nullable final View.OnClickListener actionListener) {
-        AlertDialogFragment.newInstance(0, errorResId, null).show(fragmentManager, null);
+        AlertDialogFragment.newInstance(0, errorResId,
+                actionListener == null ? null :
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        actionListener.onClick(((AlertDialog)dialog).getButton(AlertDialog.BUTTON_POSITIVE));
+                    }
+                }
+        ).show(fragmentManager, null);
     }
 }

@@ -32,10 +32,11 @@ import roboguice.inject.InjectView;
 
 /**
  *  A base class to handle some common task
- *  NOTE- in the layout file,  these should be defined
- *  1. offlineBar
- *  2. progress_spinner
- *  3. offline_mode_message
+ *  NOTE - in the layout file,  these should be defined
+ *  1. content_error_root (The layout that contains all of the following)
+ *  2. content_error (The layout having the views that'll be used to show error)
+ *  3. content_area (The layout having the views that'll be used to present data on screen)
+ *  4. loading_indicator (A view or layout to show loading while data loads)
  */
 @ContentView(R.layout.activity_course_base)
 public abstract  class CourseBaseActivity  extends BaseFragmentActivity

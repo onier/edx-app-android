@@ -54,7 +54,7 @@ public class SnackbarErrorNotification extends ErrorNotification {
      */
     @Override
     public void showError(@StringRes final int errorResId,
-                          @NonNull final Icon icon,
+                          @Nullable final Icon icon,
                           @StringRes final int actionTextResId,
                           @Nullable final View.OnClickListener actionListener) {
         if (snackbar == null) {

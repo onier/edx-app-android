@@ -21,7 +21,7 @@ import static android.view.View.VISIBLE;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
- * An overlay notification error message on top of the content area.
+ * A full screen error notification message on top of the content area.
  */
 public class OverlayErrorNotification extends ErrorNotification {
     /**
