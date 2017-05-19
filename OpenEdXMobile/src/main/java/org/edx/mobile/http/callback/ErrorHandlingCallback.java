@@ -13,6 +13,8 @@ import org.edx.mobile.http.notifications.ErrorNotification;
 import org.edx.mobile.http.notifications.SnackbarErrorNotification;
 import org.edx.mobile.interfaces.RefreshListener;
 import org.edx.mobile.util.NetworkUtil;
+import org.edx.mobile.util.images.ErrorUtils;
+import org.edx.mobile.view.common.TaskMessageCallback;
 import org.edx.mobile.view.common.TaskProgressCallback;
 
 import java.io.IOException;
@@ -63,6 +65,35 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
      */
     @Nullable
     private final RefreshListener refreshListener;
+
+    //TODO: Remove this legacy code starting from here, when modern error design has been implemented on all screens i.e. SnackBar, FullScreen and Dialog based errors.
+    @Nullable
+    private TaskMessageCallback messageCallback;
+
+    @Nullable
+    private CallTrigger callTrigger;
+
+    /**
+     * Create a new instance of this class.
+     *
+     * @param context A Context for resolving the error message strings. Note that for convenience,
+     *                this will be checked to determine whether it's implementing the
+     *                {@link TaskProgressCallback} interface, and will be registered as such if so.
+     *                If this is not the desired outcome, then one of the alternative constructors
+     *                should be used instead, with the relevant callback parameters explicitly
+     *                passed as null (this may require casting the null in case of ambiguity when
+     *                using a constructor that only sets one callback explicitly).
+     * @param messageCallback The callback to invoke for delivering any error messages.
+     */
+    public ErrorHandlingCallback(@NonNull final Context context,
+                                 @Nullable TaskProgressCallback progressCallback,
+                                 @Nullable TaskMessageCallback messageCallback,
+                                 @Nullable CallTrigger callTrigger) {
+        this(context, progressCallback, null, null, null);
+        this.messageCallback = messageCallback;
+        this.callTrigger = callTrigger;
+    }
+    // LEGACY CODE ENDS HERE, all occurrences of {@link #messageCallback} should also be deleted in future
 
     /**
      * Create a new instance of this class.
@@ -234,6 +265,10 @@ public abstract class ErrorHandlingCallback<T> implements Callback<T> {
     public void onFailure(@NonNull final Call<T> call, @NonNull final Throwable error) {
         if (progressCallback != null) {
             progressCallback.finishProcess();
+        }
+        if (messageCallback != null && callTrigger != null && !call.isCanceled()) {
+            messageCallback.onMessage(callTrigger.getMessageType(),
+                    ErrorUtils.getErrorMessage(error, callTrigger, context));
         }
         if (errorNotification != null) {
             if (refreshListener != null) {
