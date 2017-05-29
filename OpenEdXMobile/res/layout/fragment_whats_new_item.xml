@@ -20,6 +20,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="@dimen/whats_new_image_horizontal_margin"
                 android:layout_marginRight="@dimen/whats_new_image_horizontal_margin"
+                tools:ignore="ContentDescription"
                 tools:src="@drawable/screen_1" />
         </LinearLayout>
 
