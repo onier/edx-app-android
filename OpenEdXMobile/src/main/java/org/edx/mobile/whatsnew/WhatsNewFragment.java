@@ -22,6 +22,7 @@ import org.edx.mobile.databinding.FragmentWhatsNewBinding;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.util.FileUtil;
 import org.edx.mobile.util.ResourceUtil;
+import org.edx.mobile.view.custom.IndicatorController;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -32,6 +33,10 @@ public class WhatsNewFragment extends BaseFragment {
     private final Logger logger = new Logger(getClass().getName());
 
     private FragmentWhatsNewBinding binding;
+
+    private IndicatorController indicatorController;
+
+    private int noOfPages = 0;
 
     @Nullable
     @Override
@@ -49,6 +54,7 @@ public class WhatsNewFragment extends BaseFragment {
 
         initViewPager();
         initButtons();
+        initProgressIndicator();
     }
 
     private void initViewPager() {
@@ -57,8 +63,9 @@ public class WhatsNewFragment extends BaseFragment {
             final Type type = new TypeToken<List<WhatsNewModel>>() {
             }.getType();
             final List<WhatsNewModel> list = new Gson().fromJson(whatsNewJson, type);
-            binding.viewPager.setAdapter(new WhatsNewAdapter(getFragmentManager(), list));
 
+            noOfPages = list.size();
+            binding.viewPager.setAdapter(new WhatsNewAdapter(getFragmentManager(), list));
             binding.viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -66,7 +73,8 @@ public class WhatsNewFragment extends BaseFragment {
 
                 @Override
                 public void onPageSelected(int position) {
-                    if (position == list.size() - 1) {
+                    indicatorController.selectPosition(position);
+                    if (position == noOfPages - 1) {
                         binding.doneBtn.setVisibility(View.VISIBLE);
                     } else {
                         binding.doneBtn.setVisibility(View.GONE);
@@ -99,6 +107,12 @@ public class WhatsNewFragment extends BaseFragment {
                 getActivity().finish();
             }
         });
+    }
+
+    private void initProgressIndicator() {
+        indicatorController = new IndicatorController();
+        binding.indicatorContainer.addView(indicatorController.newInstance(getContext()));
+        indicatorController.initialize(noOfPages);
     }
 
     private class WhatsNewAdapter extends FragmentStatePagerAdapter {

@@ -39,6 +39,13 @@
             android:layout_marginBottom="@dimen/whats_new_pager_vertical_margin"
             android:layout_marginTop="@dimen/whats_new_pager_vertical_margin" />
 
+        <FrameLayout
+            android:id="@+id/indicator_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:padding="@dimen/edx_margin" />
+
         <Button
             android:id="@+id/done_btn"
             android:layout_width="wrap_content"
