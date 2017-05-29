@@ -26,7 +26,7 @@
             android:layout_gravity="top|right|end"
             android:background="@drawable/selectable_box_overlay"
             android:contentDescription="@string/label_close"
-            android:padding="@dimen/edx_margin"
+            android:padding="@dimen/widget_margin"
             android:text="{fa-close}"
             android:textColor="@color/white"
             android:textSize="@dimen/edx_x_large"
@@ -42,17 +42,17 @@
         <FrameLayout
             android:id="@+id/indicator_container"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/whats_new_pager_vertical_margin"
             android:layout_gravity="bottom|center"
-            android:padding="@dimen/edx_margin" />
+            android:padding="@dimen/widget_margin" />
 
         <Button
             android:id="@+id/done_btn"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/whats_new_pager_vertical_margin"
             android:layout_gravity="bottom|right|end"
             android:background="@drawable/selectable_box_overlay"
-            android:padding="@dimen/edx_margin"
+            android:padding="@dimen/widget_margin"
             android:text="@string/label_done"
             android:textColor="@color/white"
             android:visibility="gone"
