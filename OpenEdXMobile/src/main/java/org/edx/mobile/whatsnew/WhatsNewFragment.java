@@ -14,12 +14,16 @@ import android.view.ViewGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 
 import org.edx.mobile.BuildConfig;
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
+import org.edx.mobile.base.MainApplication;
+import org.edx.mobile.core.IEdxEnvironment;
 import org.edx.mobile.databinding.FragmentWhatsNewBinding;
 import org.edx.mobile.logger.Logger;
+import org.edx.mobile.module.prefs.PrefManager;
 import org.edx.mobile.util.FileUtil;
 import org.edx.mobile.util.ResourceUtil;
 import org.edx.mobile.view.custom.IndicatorController;
@@ -29,8 +33,10 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 public class WhatsNewFragment extends BaseFragment {
-
     private final Logger logger = new Logger(getClass().getName());
+
+    @Inject
+    protected IEdxEnvironment environment;
 
     private FragmentWhatsNewBinding binding;
 
