@@ -35,10 +35,10 @@ public class DialogErrorNotification extends ErrorNotification {
     /**
      * Show the error notification as a modal dialog, according to the provided details.
      *
-     * @param errorResId The resource ID of the error message.
-     * @param icon The error icon. This is currently ignored here.
+     * @param errorResId      The resource ID of the error message.
+     * @param icon            The error icon. This is currently ignored here.
      * @param actionTextResId The resource ID of the action button text.
-     * @param actionListener The callback to be invoked when the action button is clicked.
+     * @param actionListener  The callback to be invoked when the action button is clicked.
      */
     @Override
     public void showError(@StringRes final int errorResId,
@@ -47,12 +47,12 @@ public class DialogErrorNotification extends ErrorNotification {
                           @Nullable final View.OnClickListener actionListener) {
         AlertDialogFragment.newInstance(0, errorResId,
                 actionListener == null ? null :
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        actionListener.onClick(((AlertDialog)dialog).getButton(AlertDialog.BUTTON_POSITIVE));
-                    }
-                }
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                actionListener.onClick(((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE));
+                            }
+                        }
         ).show(fragmentManager, null);
     }
 }

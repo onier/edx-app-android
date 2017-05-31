@@ -26,6 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
+            android:background="@drawable/selectable_box_overlay"
             style="@style/edX.Widget.DisableableButton"
             tools:visibility="visible"
             tools:text="Reload" />

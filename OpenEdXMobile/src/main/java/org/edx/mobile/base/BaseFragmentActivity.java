@@ -44,10 +44,13 @@ import de.greenrobot.event.EventBus;
 
 public abstract class BaseFragmentActivity extends BaseAppActivity
         implements NetworkSubject, ICommonUI, OnActivityResultListener {
+    private final Handler handler = new Handler();
+    protected final Logger logger = new Logger(getClass().getName());
 
-    protected ActionBarDrawerToggle mDrawerToggle;
     private boolean isConnectedToWifi = false;
     private boolean isActivityStarted = false;
+    protected ActionBarDrawerToggle mDrawerToggle;
+
     @Inject
     protected IEdxEnvironment environment;
     private List<NetworkObserver> networkObservers = new ArrayList<>();
@@ -77,9 +80,6 @@ public abstract class BaseFragmentActivity extends BaseAppActivity
             o.onOnline();
         }
     }
-
-    private final Handler handler = new Handler();
-    protected final Logger logger = new Logger(getClass().getName());
 
     @Override
     protected void onCreate(Bundle arg0) {
