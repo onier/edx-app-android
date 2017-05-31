@@ -208,6 +208,9 @@ public class CourseCombinedInfoFragment extends BaseFragment implements RefreshL
                         this) {
                     @Override
                     protected void onResponse(final List<AnnouncementsModel> announcementsList) {
+                        if (getActivity() == null) {
+                            return;
+                        }
                         savedAnnouncements = announcementsList;
                         if (announcementsList != null && announcementsList.size() > 0) {
                             populateAnnouncements(announcementsList);
@@ -219,6 +222,9 @@ public class CourseCombinedInfoFragment extends BaseFragment implements RefreshL
 
                     @Override
                     protected void onFinish() {
+                        if (getActivity() == null) {
+                            return;
+                        }
                         if (!EventBus.getDefault().isRegistered(CourseCombinedInfoFragment.this)) {
                             EventBus.getDefault().registerSticky(CourseCombinedInfoFragment.this);
                         }
