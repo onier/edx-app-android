@@ -7,33 +7,33 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.6"
-            android:background="@drawable/whats_new_gradient"
-            android:orientation="vertical">
+            android:layout_weight="0.7"
+            android:background="@drawable/whats_new_gradient">
 
             <ImageView
                 android:id="@+id/image"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_gravity="bottom"
                 android:layout_marginLeft="@dimen/whats_new_image_horizontal_margin"
                 android:layout_marginRight="@dimen/whats_new_image_horizontal_margin"
                 tools:ignore="ContentDescription"
                 tools:src="@drawable/screen_1" />
-        </LinearLayout>
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.3"
             android:background="@color/edx_brand_primary_base"
-            android:gravity="center"
+            android:gravity="top|center_horizontal"
             android:orientation="vertical"
             android:paddingLeft="@dimen/edx_margin"
             android:paddingRight="@dimen/edx_margin"
-            android:paddingTop="@dimen/widget_margin">
+            android:paddingTop="@dimen/edx_margin">
 
             <TextView
                 android:id="@+id/title"

@@ -26,7 +26,7 @@ public class WhatsNewActivity extends BaseAppActivity {
 
         Fragment singleFragment = new WhatsNewFragment();
 
-        //this activity will only ever hold this lone fragment, so we
+        // This activity will only ever hold this lone fragment, so we
         // can afford to retain the instance during activity recreation
         singleFragment.setRetainInstance(true);
 

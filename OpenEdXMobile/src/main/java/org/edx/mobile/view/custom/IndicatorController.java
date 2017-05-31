@@ -15,41 +15,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IndicatorController {
-    public final static int DEFAULT_COLOR = 1;
-
-    private Context mContext;
-    private LinearLayout mDotLayout;
-    private List<ImageView> mDots;
-    private int mSlideCount;
-    int selectedDotColor = DEFAULT_COLOR;
-    int unselectedDotColor = DEFAULT_COLOR;
-    int mCurrentPosition;
-
     private static final int FIRST_PAGE_NUM = 0;
+    private static final int DEFAULT_COLOR = 1;
+
+    private Context context;
+    private LinearLayout dotLayout;
+    private List<ImageView> dots;
+    private int slideCount;
+    private int selectedDotColor = DEFAULT_COLOR;
+    private int unselectedDotColor = DEFAULT_COLOR;
+    private int mCurrentPosition;
 
     public View newInstance(@NonNull Context context) {
-        mContext = context;
-        mDotLayout = (LinearLayout) View.inflate(context, R.layout.default_indicator, null);
-        return mDotLayout;
+        this.context = context;
+        dotLayout = (LinearLayout) View.inflate(context, R.layout.default_indicator, null);
+        return dotLayout;
     }
 
     public void initialize(int slideCount) {
-        mDots = new ArrayList<>();
-        mSlideCount = slideCount;
+        dots = new ArrayList<>();
+        this.slideCount = slideCount;
         selectedDotColor = -1;
         unselectedDotColor = -1;
 
         for (int i = 0; i < slideCount; i++) {
-            ImageView dot = new ImageView(mContext);
-            dot.setImageDrawable(UiUtil.getDrawable(mContext, R.drawable.indicator_dot_active));
+            ImageView dot = new ImageView(context);
+            dot.setImageDrawable(UiUtil.getDrawable(context, R.drawable.indicator_dot_active));
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
 
-            mDotLayout.addView(dot, params);
-            mDots.add(dot);
+            dotLayout.addView(dot, params);
+            dots.add(dot);
         }
 
         selectPosition(FIRST_PAGE_NUM);
@@ -57,14 +56,14 @@ public class IndicatorController {
 
     public void selectPosition(int index) {
         mCurrentPosition = index;
-        for (int i = 0; i < mSlideCount; i++) {
+        for (int i = 0; i < slideCount; i++) {
             int drawableId = (i == index) ? (R.drawable.indicator_dot_inactive) : (R.drawable.indicator_dot_active);
-            Drawable drawable = UiUtil.getDrawable(mContext, drawableId);
+            Drawable drawable = UiUtil.getDrawable(context, drawableId);
             if (selectedDotColor != DEFAULT_COLOR && i == index)
                 drawable.mutate().setColorFilter(selectedDotColor, PorterDuff.Mode.SRC_IN);
             if (unselectedDotColor != DEFAULT_COLOR && i != index)
                 drawable.mutate().setColorFilter(unselectedDotColor, PorterDuff.Mode.SRC_IN);
-            mDots.get(i).setImageDrawable(drawable);
+            dots.get(i).setImageDrawable(drawable);
         }
     }
 }

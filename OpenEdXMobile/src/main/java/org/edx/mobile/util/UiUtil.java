@@ -117,4 +117,10 @@ public class UiUtil {
         //noinspection deprecation
         return context.getResources().getDrawable(drawableId);
     }
+
+    @DrawableRes
+    public static int getDrawable(@NonNull Context context, @NonNull String drawableName) {
+        return context.getResources().getIdentifier(drawableName, "drawable",
+                context.getPackageName());
+    }
 }

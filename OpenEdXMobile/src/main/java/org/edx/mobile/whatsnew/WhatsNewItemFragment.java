@@ -2,7 +2,6 @@ package org.edx.mobile.whatsnew;
 
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -12,9 +11,10 @@ import android.view.ViewGroup;
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
 import org.edx.mobile.databinding.FragmentWhatsNewItemBinding;
+import org.edx.mobile.util.UiUtil;
 
 public class WhatsNewItemFragment extends BaseFragment {
-    public static String ARG_MODEL = "ARG_MODEL";
+    public static final String ARG_MODEL = "ARG_MODEL";
 
     private FragmentWhatsNewItemBinding binding;
 
@@ -42,15 +42,10 @@ public class WhatsNewItemFragment extends BaseFragment {
 
         binding.title.setText(escapePlatformName(model.getTitle()));
         binding.message.setText(escapePlatformName(model.getMessage()));
-        @DrawableRes
-        int imageDrawable = getResources().getIdentifier(model.getImage(), "drawable",
-                getContext().getPackageName());
-        binding.image.setImageResource(imageDrawable);
+        binding.image.setImageResource(UiUtil.getDrawable(getContext(), model.getImage()));
     }
 
     private String escapePlatformName(@NonNull String input) {
-        final String toEscape = "platform_name";
-        return input.contains(toEscape) ? input.replaceAll(toEscape,
-                getString(R.string.platform_name)) : input;
+        return input.replaceAll("platform_name", getString(R.string.platform_name));
     }
 }

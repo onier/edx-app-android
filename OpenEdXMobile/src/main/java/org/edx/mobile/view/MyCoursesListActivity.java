@@ -54,6 +54,7 @@ public class MyCoursesListActivity extends BaseSingleFragmentActivity {
     private void initWhatsNew() {
         if (environment.getConfig().isWhatsNewEnabled()) {
             final PrefManager.AppInfoPrefManager appPrefs = new PrefManager.AppInfoPrefManager(this);
+            appPrefs.setWhatsNewShown(false);
             if (!appPrefs.isWhatsNewShown()) {
                 environment.getRouter().showWhatsNewActivity(this);
             }
