@@ -93,7 +93,7 @@ public class MyCoursesListFragment extends BaseFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_my_courses_list, container, false);
-        errorNotification = new OverlayErrorNotification(binding.contentErrorRoot);
+        errorNotification = new OverlayErrorNotification(binding.myCourseList);
         snackbarErrorNotification = new SnackbarErrorNotification(binding.getRoot());
         binding.swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -147,21 +147,20 @@ public class MyCoursesListFragment extends BaseFragment
                                 environment.getNotificationDelegate());
                         break;
                     }
-                    default: {
-                        errorNotification.showError(getActivity(), exception, R.string.lbl_reload,
-                                new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        if (NetworkUtil.isConnected(getContext())) {
-                                            onRefresh();
-                                        }
-                                    }
-                                });
-                    }
                 }
             } else {
                 logger.error(exception);
             }
+
+            errorNotification.showError(getActivity(), exception, R.string.lbl_reload,
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (NetworkUtil.isConnected(getContext())) {
+                                onRefresh();
+                            }
+                        }
+                    });
         } else if (result.getResult() != null) {
             ArrayList<EnrolledCoursesResponse> newItems = new ArrayList<EnrolledCoursesResponse>(result.getResult());
 
@@ -171,17 +170,18 @@ public class MyCoursesListFragment extends BaseFragment
                 adapter.setItems(newItems);
                 adapter.notifyDataSetChanged();
             }
+
+            if (adapter.isEmpty() && !environment.getConfig().getCourseDiscoveryConfig().isCourseDiscoveryEnabled()) {
+                errorNotification.showError(R.string.no_courses_to_display,
+                        FontAwesomeIcons.fa_exclamation_circle, 0, null);
+                binding.myCourseList.setVisibility(View.GONE);
+            } else {
+                binding.myCourseList.setVisibility(View.VISIBLE);
+                errorNotification.hideError();
+            }
         }
         binding.swipeContainer.setRefreshing(false);
         binding.loadingIndicator.getRoot().setVisibility(View.GONE);
-        if (adapter.isEmpty() && !environment.getConfig().getCourseDiscoveryConfig().isCourseDiscoveryEnabled()) {
-            errorNotification.showError(R.string.no_courses_to_display,
-                    FontAwesomeIcons.fa_exclamation_circle, 0, null);
-            binding.myCourseList.setVisibility(View.GONE);
-        } else {
-            binding.myCourseList.setVisibility(View.VISIBLE);
-            errorNotification.hideError();
-        }
 
         isInitialServerCallDone = true;
         if (!(NetworkUtil.isConnected(getActivity()))) {
