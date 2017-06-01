@@ -9,21 +9,24 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.joanzapata.iconify.IconDrawable;
+import com.joanzapata.iconify.fonts.FontAwesomeIcons;
 
 import org.edx.mobile.BuildConfig;
 import org.edx.mobile.R;
 import org.edx.mobile.base.BaseFragment;
-import org.edx.mobile.base.MainApplication;
 import org.edx.mobile.core.IEdxEnvironment;
 import org.edx.mobile.databinding.FragmentWhatsNewBinding;
 import org.edx.mobile.logger.Logger;
-import org.edx.mobile.module.prefs.PrefManager;
 import org.edx.mobile.util.FileUtil;
 import org.edx.mobile.util.ResourceUtil;
 import org.edx.mobile.view.custom.IndicatorController;
@@ -34,6 +37,7 @@ import java.util.List;
 
 public class WhatsNewFragment extends BaseFragment {
     private final Logger logger = new Logger(getClass().getName());
+    private static final int FOCUS_DELAY_MS = 300;
 
     @Inject
     protected IEdxEnvironment environment;
@@ -61,6 +65,17 @@ public class WhatsNewFragment extends BaseFragment {
         initViewPager();
         initButtons();
         initProgressIndicator();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        binding.screenTitle.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                binding.screenTitle.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
+            }
+        }, FOCUS_DELAY_MS);
     }
 
     private void initViewPager() {

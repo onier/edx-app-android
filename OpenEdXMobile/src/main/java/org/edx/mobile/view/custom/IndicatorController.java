@@ -24,7 +24,6 @@ public class IndicatorController {
     private int slideCount;
     private int selectedDotColor = DEFAULT_COLOR;
     private int unselectedDotColor = DEFAULT_COLOR;
-    private int mCurrentPosition;
 
     public View newInstance(@NonNull Context context) {
         this.context = context;
@@ -55,7 +54,6 @@ public class IndicatorController {
     }
 
     public void selectPosition(int index) {
-        mCurrentPosition = index;
         for (int i = 0; i < slideCount; i++) {
             int drawableId = (i == index) ? (R.drawable.indicator_dot_inactive) : (R.drawable.indicator_dot_active);
             Drawable drawable = UiUtil.getDrawable(context, drawableId);
